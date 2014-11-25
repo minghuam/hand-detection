@@ -14,10 +14,11 @@ int main(int argc, char **argv){
 	std::string classifier_path = "./models/classifiers";
 	std::string gfeat_path = "./models/histogram";
 	
+	std::vector<std::string> mask_files = list_dir(mask_path.c_str(), ".jpg");
+	std::vector<std::string> rgb_files = list_dir(rgb_path.c_str(), ".jpg");
+	
 	hd.train_and_save(rgb_files, mask_files, "rvl", classifier_path, gfeat_path);
 
-	//std::vector<std::string> mask_files = list_dir(mask_path, ".jpg");
-	//std::vector<std::string> rgb_files = list_dir(rgb_path, ".jpg");
 	
 	//hd.load_models(model_files, gfeat_files);
 
