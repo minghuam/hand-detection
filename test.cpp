@@ -9,9 +9,9 @@ int main(int argc, char **argv){
 	std::vector<std::string> mask_files = list_dir("./images/mask", ".jpg");
 	std::vector<std::string> rgb_files = list_dir("./images/rgb", ".jpg");
 	
-	HandDetector hd;
+	HandDetector hd(3);
 
-	hd.train_and_save(rgb_files, mask_files, "rvl", "./models");
+	hd.train_and_save(rgb_files, mask_files, "rvl", "./models/classifiers", "./models/histogram");
 }
 
 
