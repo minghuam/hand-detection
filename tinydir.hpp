@@ -4,6 +4,7 @@
 #include <iostream>
 #include <dirent.h>
 #include <vector>
+#include <algorithm>
 
 /* Get the extension of a file */
 const char* get_extension(const char *file){
@@ -49,6 +50,9 @@ std::vector<std::string> list_dir(const char* dir, const char* ext = NULL){
 		}
 		files.push_back(s_dir + std::string(entry->d_name));
 	}
+
+	sort(files.begin(), files.end());
+
 	return files;
 }
 

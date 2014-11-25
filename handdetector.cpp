@@ -1,38 +1,68 @@
 #include "handdetector.hpp"
 
 HandDetector::HandDetector(int knn): _knn(knn){
-
+    _flann = NULL;
+    _extractor = NULL;
+    _global_feat = NULL;
 }
 
 HandDetector::~HandDetector(){
-
+    reset();
 }
 
-void HandDetector::load_models(std::string feature_set, std::vector<std::string> &model_files, std::vector<std::string> &gfeat_files){
+void HandDetector::reset(){
 
-    if(model_files.size() != gfeat_files.size()){
+    if(_flann != NULL){
+        delete _flann;
+        _flann = NULL;
+    }
+
+    if(_extractor != NULL){
+        delete _extractor;
+        _extractor = NULL;
+    }
+
+    if(_global_feat != NULL){
+        delete _global_feat;
+        _global_feat = NULL;
+    }
+
+    for(int i = 0; i < _classifiers.size(); i++){
+        delete _classifiers[i];
+    }
+
+    _classifiers.clear();
+}
+
+void HandDetector::load_models(std::string feature_set, std::vector<std::string> &classifier_files, \
+                                std::vector<std::string> &gfeat_files){
+
+    if(classifier_files.size() != gfeat_files.size()){
         std::cout << "Model and Global feature files are not equal!" << std::endl;
         return;
     }
 
-    _extractor.set_extractor(feature_set);
-    // clear data
-    _global_feat = cv::Mat();
-    _classifiers = std::vector<LcRandomTreesR>(model_files.size());
+    reset();
+    
+    _global_feat = new Mat();    
+    _extractor = new LcFeatureExtractor();
+    _extractor->set_extractor(feature_set);
 
-    for(int i = 0; i < model_files.size(); i++){
+    std::cout << "LOADING: " << std::endl;  
+    
+    for(int i = 0; i < classifier_files.size(); i++){
         FileStorage fs;
-        fs.open(gfeat_files[i],FileStorage::READ);
+        fs.open(gfeat_files[i], FileStorage::READ);
         Mat hist;
         fs["hsv_histogram"] >> hist;
         fs.release();
-        _global_feat.push_back(hist);
-
-        _classifiers[i].load_full(model_files[i]);
+        _global_feat->push_back(hist);
+        LcRandomTreesR *classifier = new LcRandomTreesR();
+        classifier->load_full(classifier_files[i]);
+        _classifiers.push_back(classifier);
     }
-
-    flann::KMeansIndexParams indexParams;
-    _flann  = flann::Index(_global_feat, indexParams);
+    
+    _flann  = new flann::Index(*_global_feat, flann::KMeansIndexParams());
 }
 
 void HandDetector::train_and_save(std::vector<std::string> &rgb_files, std::vector<std::string> &mask_files, \
@@ -43,11 +73,11 @@ void HandDetector::train_and_save(std::vector<std::string> &rgb_files, std::vect
 		return;
 	}
 
-    _extractor.set_extractor(feature_set);
+    reset();
 
-    // clear data
-    _global_feat = cv::Mat();
-    _classifiers = std::vector<LcRandomTreesR>(rgb_files.size());
+    _global_feat = new Mat();    
+    _extractor = new LcFeatureExtractor();
+    _extractor->set_extractor(feature_set);
 
     std::cout << "TRAINING: " << std::endl;    
     stringstream ss;
@@ -64,11 +94,11 @@ void HandDetector::train_and_save(std::vector<std::string> &rgb_files, std::vect
         //imshow("mask",mask_img);
         //waitKey(0);
         
-        // Global Feature, we use HSV histogram
+        // global feature, HSV histogram
         Mat hist;
         computeColorHist_HSV(color_img,hist);
 
-        _global_feat.push_back(hist);
+        _global_feat->push_back(hist);
 
         ss.str("");
         ss << hist_saving_dir << "/globalfeat_" << i << ".xml";
@@ -77,86 +107,73 @@ void HandDetector::train_and_save(std::vector<std::string> &rgb_files, std::vect
         fs << "hsv_histogram" << hist;
         fs.release();
 
-        // Random Tree Classifier
+        // train one random tree classifier
         Mat desc;
         Mat lab;
         vector<KeyPoint> kp;
-        
         //mask_img.convertTo(mask_img,CV_8UC1);
-        _extractor.work(color_img, desc, mask_img, lab,1, &kp);
-        
-        LcRandomTreesR classifier;
-        classifier.train(desc,lab);
 
-        _classifiers[i] = classifier;
-        
+        _extractor->work(color_img, desc, mask_img, lab,1, &kp);
+        LcRandomTreesR *classifier = new LcRandomTreesR();
+        classifier->train(desc,lab);
+
+        // save
         ss.str("");
         ss << model_saving_dir << "/randtree_" << i;
-        classifier.save(ss.str());
+        classifier->save(ss.str());
+
+        _classifiers.push_back(classifier);
     }
 
-    flann::KMeansIndexParams indexParams;
-    _flann  = flann::Index(_global_feat, indexParams);
-
+    _flann  = new flann::Index(*_global_feat, flann::KMeansIndexParams());
 }
 
 
-void HandDetector::test(Mat &img, Mat &dsp, int num_models, float color_code)
+void HandDetector::test(Mat &img, Mat &dsp, float color_code)
 {
-    if(num_models>_knn) return;
+    int num_models = 1;
+    if(num_models > _knn) return;
     
+    // compute histogram
     Mat hist;
-    computeColorHist_HSV(img,hist);                                 // extract hist
-    
+    computeColorHist_HSV(img, hist);
+
+    // probe search, get the indices in order
     std::vector<int> indices;
     std::vector<float> dists;
-    _flann.knnSearch(hist, indices, dists, _knn);            // probe search
-    
+    _flann->knnSearch(hist, indices, dists, _knn);
+
+    // extract features
     Mat descriptors;
     vector<KeyPoint> kp;
-
-    _extractor.work(img, descriptors, 3, &kp);
+    _extractor->work(img, descriptors, 3, &kp);
     
+    // predict and average results
     Mat response_avg = Mat::zeros(descriptors.rows, 1, CV_32FC1); 
     Mat response_vec;
-
     float norm = 0;
-    for(int i=0;i<num_models;i++)
+    for(int i = 0; i < num_models; i++)
     {
         int idx = indices[i];
-        _classifiers[idx].predict(descriptors, response_vec);       // run classifier
-        
+        _classifiers[idx]->predict(descriptors, response_vec);
+
         response_avg += response_vec*float(pow(0.9f,(float)i));
         norm += float(pow(0.9f,(float)i));
     }
-    
     response_avg /= norm;
     
-    cv::Size sz = img.size();
-    int bs = _extractor.bound_setting; 
     Mat response_img;
-    rasterizeResVec(response_img, response_avg, kp, sz, bs);
+    cv::Size sz = img.size();
+    rasterizeResVec(response_img, response_avg, kp, sz);
+    
     colormap(response_img, _raw, 1, color_code);
 
     vector<Point2f> pt;
-    _ppr = postprocess(response_img,pt);
-    
-    colormap(_ppr,_ppr,1, color_code);
-    
-    Mat _dsp;
+    _ppr = postprocess(response_img, pt);
 
-    if(0)
-    {
-        
-        imshow("hd response",_dsp);
-        imshow("hd img",img);   
-        imshow("_ppr",_ppr);    
-        waitKey(1);
-    }
-    
-    //dsp = pp;
-    if(!dsp.data) dsp = _dsp;                   // pass by reference?
-    
+    colormap(_ppr,_ppr,1, color_code);
+
+    dsp = _ppr;
 }
 
 
@@ -191,15 +208,14 @@ Mat HandDetector::postprocess(Mat &img,vector<Point2f> &pt)
             max_size = contourArea(Mat(co[i]));
         }
     }
-    
     return tmp;
-
 }
 
 
-void HandDetector::rasterizeResVec(Mat &img, Mat&res,vector<KeyPoint> &keypts, cv::Size s, int bs)
+void HandDetector::rasterizeResVec(Mat &img, Mat&res,vector<KeyPoint> &keypts, cv::Size s)
 {   
-    if((img.rows!=s.height) || (img.cols!=s.width) || (img.type()!=CV_32FC1) ) img = Mat::zeros( s, CV_32FC1);
+    if((img.rows!=s.height) || (img.cols!=s.width) || \
+        (img.type()!=CV_32FC1) ) img = Mat::zeros( s, CV_32FC1);
     
     for(int i = 0;i< (int)keypts.size();i++)
     {
