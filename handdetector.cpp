@@ -113,9 +113,11 @@ void HandDetector::test(Mat &img, Mat &dsp, int num_models, float color_code)
     _flann.knnSearch(hist, indices, dists, _knn);            // probe search
     
     Mat descriptors;
-    _extractor.work(img, descriptors,3,&_kp);
+    vector<KeyPoint> kp;
+
+    _extractor.work(img, descriptors, 3, &kp);
     
-    Mat response_avg = Mat::zeros(descriptors.rows,1,CV_32FC1); 
+    Mat response_avg = Mat::zeros(descriptors.rows, 1, CV_32FC1); 
     Mat response_vec;
 
     float norm = 0;
@@ -130,12 +132,11 @@ void HandDetector::test(Mat &img, Mat &dsp, int num_models, float color_code)
     
     response_avg /= norm;
     
-    vector<KeyPoint> kp;
     cv::Size sz = img.size();
     int bs = _extractor.bound_setting; 
     Mat response_img;
     rasterizeResVec(response_img, response_avg, kp, sz, bs);
-    colormap(response_img, _raw,1);
+    colormap(response_img, _raw, 1, color_code);
 
     vector<Point2f> pt;
     _ppr = postprocess(response_img,pt);
@@ -166,7 +167,7 @@ Mat HandDetector::postprocess(Mat &img,vector<Point2f> &pt)
     GaussianBlur(img,tmp,cv::Size(15,15),0,0,BORDER_REFLECT);
     
     //Mat dsp;
-    colormap(tmp,_blu,1);
+    colormap(tmp, _blu, 1);
     //imshow("dsp",dsp);
     
     tmp = tmp > 0.04;

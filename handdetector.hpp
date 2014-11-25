@@ -33,7 +33,7 @@ public:
 	void test(Mat &img, Mat &dsp, int num_models, float color_code);
 	Mat postprocess(Mat &img,vector<Point2f> &pt);
 	void rasterizeResVec(Mat &img, Mat&res,vector<KeyPoint> &keypts, cv::Size s, int bs);
-	void colormap(Mat &src, Mat &dst, int do_norm, float color_code);
+	void colormap(Mat &src, Mat &dst, int do_norm, float color_code = 0.85);
 
 	void computeColorHist_HSV(cv::Mat &src, cv::Mat &hist);
 
