@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<opencv_storage>
+<hsv_histogram type_id="opencv-matrix">
+  <rows>1</rows>
+  <cols>64</cols>
+  <dt>f</dt>
+  <data>
+    0. 2.25257553e+02 0. 5.01145935e+00 0. 9.78427792e+00 0.
+    1.49467144e+01 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+    0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.
+    0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.</data></hsv_histogram>
+</opencv_storage>
