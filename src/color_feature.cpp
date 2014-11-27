@@ -1,5 +1,25 @@
 #include "color_feature.hpp"
 
+ColorFeature::ColorFeature(){
+	ColorFeature(CS_RGB, 1);
+}
+
+ColorFeature::ColorFeature(COLOR_SPACE cs, int patch_size) {
+	_color_space = cs;
+	_patch_size = patch_size;
+
+	if(_patch_size == 1){
+		_dimension =  3;
+	}else{
+		_dimension = _patch_size * 2 + (_patch_size - 2) * 2;
+		_dimension *= 3;
+	}
+}
+
+std::string ColorFeature::key() const{
+	return cs2str(_color_space);
+}
+
 void ColorFeature::compute(const cv::Mat &img, \
 			const std::vector<cv::KeyPoint> &keypts, \
 			cv::Mat &desc){
@@ -10,6 +30,8 @@ void ColorFeature::compute(const cv::Mat &img, \
 			covert_color(img, color);
 			_cache->push(key(), color);
 		}
+	}else{
+		covert_color(img, color);
 	}
 
 	int win_size = _patch_size;

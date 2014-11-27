@@ -10,38 +10,34 @@
 #include "tinydir.hpp"
 #include "tinylog.hpp"
 
+#include "feature_extractor.hpp"
 
 #define LIVE_VIDEO 1
 
 int main(int argc, char **argv){
 
-	ImageCache cache;
-	ColorFeature rgb1(CS_RGB, 1, &cache);
-	ColorFeature hsv1(CS_HSV, 1, &cache);
-	ColorFeature hsv3(CS_HSV, 3, &cache);
-	ColorFeature rgb3(CS_RGB, 3, &cache);
+	ColorFeature rgb1(CS_RGB, 1);
+	ColorFeature hsv1(CS_HSV, 1);
+	ColorFeature hsv3(CS_HSV, 3);
+	ColorFeature rgb3(CS_RGB, 3);
+
+	FeatureExtractor fe;
+	fe.add_feature(&rgb1);
+	fe.add_feature(&hsv1);
+	fe.add_feature(&rgb3);
+	fe.add_feature(&hsv3);
 
 	cv::Mat img = cv::imread("test.jpg");
 
 	std::vector<cv::KeyPoint> keypts;
-	cache.img2keypts(img, keypts, 1);
+	fe.get_keypts(img, keypts, 1);
 
-	cv::Mat desc1 = cv::Mat::zeros(keypts.size(), rgb1.dimension(), CV_32F);
-	cv::Mat desc3 = cv::Mat::zeros(keypts.size(), rgb3.dimension(), CV_32F);
+	cv::Mat desc;
 
-	rgb1.compute(img, keypts, desc1);
-	hsv1.compute(img, keypts, desc1);
+	fe.compute(img, keypts, desc);
 
-	cache.print_status();
+	LOGF("%d, %d", desc.rows, desc.cols);
 
-	rgb3.compute(img, keypts, desc3);
-	hsv3.compute(img, keypts, desc3);
-
-	cache.print_status();
-
-	cache.clear();
-
-	cache.print_status();
 	/*
 	HandDetector hd(10);
 

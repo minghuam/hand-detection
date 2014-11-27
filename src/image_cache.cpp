@@ -19,17 +19,6 @@ int ImageCache::get(const std::string &key, cv::Mat &img){
 	}
 }
 
-void ImageCache::img2keypts(cv::Mat &img, std::vector<cv::KeyPoint> &keypts, int step_size){
-	cv::DenseFeatureDetector dfd;
-	float	initFeatureScale	= 1.f;				// inital size
-	int		featureScaleLevels	= 1;				// one level
-	float	featureScaleMul		= 1.00f;			// multiplier (ignored if only one level)
-	int		train_initXyStep	= step_size;		// space between pixels for training (must be 1)
-	dfd = cv::DenseFeatureDetector(initFeatureScale,featureScaleLevels,\
-		featureScaleMul,train_initXyStep);
-	dfd.detect(img,keypts);
-}
-
 void ImageCache::print_status(){
 	if(_images.size() == 0){
 		LOG("Image cache is empty.");

@@ -8,18 +8,28 @@
 
 /* -- Includes -- */
 #include <iostream>
-
+#include <opencv2/opencv.hpp>
+#include "image_cache.hpp"
+#include "feature.hpp"
 
 /** @brief Feature extractor abstract class
 */
 class FeatureExtractor{
-
 public:
-	virtual void load(std::string &file) = 0;
-	virtual void save(std::string &file) = 0;
-	virtual void compute(cv::Mat &img, cv::Mat &desc);
+	FeatureExtractor();
 
+	~FeatureExtractor();
 
+	int add_feature(Feature *feat);
+
+	void compute(const cv::Mat &img, const std::vector<cv::KeyPoint> keypts, cv::Mat &desc);
+	
+	void get_keypts(cv::Mat &img, std::vector<cv::KeyPoint> &keypts, int step_size);
+
+private:
+	std::vector<Feature*> _features;
+	int _dimension;
+	ImageCache *_cache;
 };
 
 

@@ -13,9 +13,6 @@ public:
 	void push(const std::string &key, const cv::Mat &img);
 	int get(const std::string &key, cv::Mat &img);
 	void print_status();
-
-	void img2keypts(cv::Mat &img, std::vector<cv::KeyPoint> &keypts, int step_size);
-
 private:
 	std::unordered_map<std::string, cv::Mat> _images;
 };
