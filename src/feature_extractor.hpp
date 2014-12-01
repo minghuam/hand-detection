@@ -1,5 +1,5 @@
 /** @file feature_extractor.hpp
-*	@brief Feature extractors.
+*	@brief FeatureExtractor class header.
 *	@author minghuam
 */
 
@@ -12,7 +12,7 @@
 #include "image_cache.hpp"
 #include "feature.hpp"
 
-/** @brief Feature extractor abstract class
+/** @brief Feature extractor class.
 */
 class FeatureExtractor{
 public:
@@ -22,13 +22,14 @@ public:
 
 	int add_feature(Feature *feat);
 
-	void compute(const cv::Mat &img, const std::vector<cv::KeyPoint> keypts, cv::Mat &desc);
+	std::vector<Feature*> get_features();
+
+	void compute(const cv::Mat &img, const std::vector<cv::KeyPoint> &keypts);
 	
-	void get_keypts(cv::Mat &img, std::vector<cv::KeyPoint> &keypts, int step_size);
+	static void get_keypts(cv::Mat &img, std::vector<cv::KeyPoint> &keypts, int step_size);
 
 private:
 	std::vector<Feature*> _features;
-	int _dimension;
 	ImageCache *_cache;
 };
 

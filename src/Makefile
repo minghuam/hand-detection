@@ -6,7 +6,7 @@ LIBS =
 
 TARGET = test
 
-SRCS = test.cpp image_cache.cpp feature_extractor.cpp feature.cpp color_feature.cpp handdetector.cpp LcBasic.cpp Classifier.cpp FeatureComputer.cpp
+SRCS = test.cpp image_cache.cpp feature_extractor.cpp feature.cpp color_feature.cpp aggregate_feature.cpp detector.cpp rtree_detector.cpp
 
 OBJS = $(SRCS:.cpp=.o)
 

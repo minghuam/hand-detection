@@ -1,6 +1,6 @@
 #include <iostream>
 #include <opencv2/opencv.hpp>
-#include "handdetector.hpp"
+//#include "handdetector.hpp"
 
 #include <vector>
 
@@ -11,6 +11,9 @@
 #include "tinylog.hpp"
 
 #include "feature_extractor.hpp"
+#include "aggregate_feature.hpp"
+
+#include "rtree_detector.hpp"
 
 #define LIVE_VIDEO 1
 
@@ -22,21 +25,62 @@ int main(int argc, char **argv){
 	ColorFeature rgb3(CS_RGB, 3);
 
 	FeatureExtractor fe;
-	fe.add_feature(&rgb1);
-	fe.add_feature(&hsv1);
-	fe.add_feature(&rgb3);
-	fe.add_feature(&hsv3);
-
-	cv::Mat img = cv::imread("test.jpg");
+	fe.add_feature(new ColorFeature(CS_RGB, 1));
+	fe.add_feature(new ColorFeature(CS_RGB, 3));
+	fe.add_feature(new ColorFeature(CS_RGB, 5));
+	fe.add_feature(new ColorFeature(CS_HSV, 1));
+	fe.add_feature(new ColorFeature(CS_HSV, 3));
+	fe.add_feature(new ColorFeature(CS_HSV, 5));
+	
+	cv::Mat img = cv::imread("rgb.jpg");
+	cv::Mat msk = cv::imread("msk.jpg");
 
 	std::vector<cv::KeyPoint> keypts;
 	fe.get_keypts(img, keypts, 1);
+					
+	cv::Mat labels = cv::Mat::zeros(keypts.size(), 1, CV_32F);
+	for(int i = 0; i < (int)keypts.size(); i++){
+		labels.at<float>(i, 0) = msk.at<cv::Vec3b>(keypts[i].pt.y, keypts[i].pt.x)(0)/255.f;
+	}
 
-	cv::Mat desc;
+	fe.compute(img, keypts);
 
-	fe.compute(img, keypts, desc);
+	std::vector<Feature*> features = fe.get_features();
+	for(int i=0; i<features.size(); i++){
+		features[i]->print();
+	}
 
-	LOGF("%d, %d", desc.rows, desc.cols);
+	AggregateFeature af;
+	af.aggregate(features);
+	af.print();
+
+	RTreeDetector rtd;
+	
+	Feature *feat = features[5];
+	cv::Mat trainingData = feat->descriptor();
+	rtd.train(trainingData, labels);
+
+	cv::Mat test = cv::imread("test.jpg");
+
+	feat->compute(test, keypts);
+
+	cv::Mat res;
+	cv::Mat desc = feat->descriptor();
+	rtd.predict(desc, res);
+
+	rtd.print();
+
+	cv::Mat output = cv::Mat::zeros(img.rows, img.cols, CV_32F);
+	for(int i=0; i<keypts.size(); i++){
+		int x = keypts[i].pt.x;
+		int y = keypts[i].pt.y;
+		output.at<float>(y, x) =  res.at<float>(i, 0);
+	}
+
+	cv::imshow("test", test);
+	cv::imshow("output", output);
+
+	cv::waitKey(0);
 
 	/*
 	HandDetector hd(10);

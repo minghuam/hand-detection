@@ -1,10 +1,10 @@
-#ifndef __TINYLOG_HPP
-#define __TINYLOG_HPP
-
 /** @file tinylog.hpp
 *	@brief Simple log functions
 *	@author minghuam
 */
+
+#ifndef __TINYLOG_HPP
+#define __TINYLOG_HPP
 
 /* -- Includes -- */
 #include <iostream>

@@ -1,24 +1,45 @@
+/** @file image_cache.cpp
+*	@brief ImageCache class implementation file.
+*	@author minghuam
+*/
+
 #include "image_cache.hpp"
 
+/**
+*	@brief Clear the cache.
+*/
 void ImageCache::clear(){
 	_images.clear();
 }
 
+/**
+*	@brief Push a image into the cache.
+*	@param key String key to access this image.
+*	@param img Image to push.
+*/
 void ImageCache::push(const std::string &key, const cv::Mat &img){
+	/* save images in a hash map */
 	_images[key] = img.clone();
 }
 
+/**
+*	@brief Given a string key, fetch the image.
+*	@param key String key to access this image.
+*	@param img Output image.
+*	@return 0 for success, -1 for failure.
+*/
 int ImageCache::get(const std::string &key, cv::Mat &img){
 	if(_images.find(key) != _images.end()){
 		img = _images[key].clone();
-		LOG("cache hit");
 		return 0;
 	}else{
-		LOG("cache miss");
 		return -1;
 	}
 }
 
+/**
+*	@brief print the current status of the cache.
+*/
 void ImageCache::print_status(){
 	if(_images.size() == 0){
 		LOG("Image cache is empty.");

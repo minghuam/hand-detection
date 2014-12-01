@@ -1,3 +1,8 @@
+/** @file image_cache.hpp
+*	@brief ImageCache class header file.
+*	@author minghuam
+*/
+
 #ifndef __IMAGE_CACHE
 #define __IMAGE_CACHE
 
@@ -7,6 +12,10 @@
 #include "tinylog.hpp"
 #include "cv_util.hpp"
 
+/**
+*	@brief Cache for intermediate results.
+*	This is useful especially for saving preprocessing results.
+*/
 class ImageCache{
 public:
 	void clear();

@@ -1,9 +1,18 @@
+/** @file cv_util.hpp
+*	@brief Useful functions for OpenCV
+*	@author minghuam
+*/
+
 #ifndef __CV_UTIL
 #define __CV_UTIL
 
 #include <string>
 #include <opencv2/opencv.hpp>
 
+/**
+*	@brief Convert OpenCV data type into string.
+*	@param type Opencv data type.
+*/
 static std::string CV_TYPE2STR(int type){
 	std::string ret;
 	int depth = type & CV_MAT_DEPTH_MASK;
@@ -21,7 +30,6 @@ static std::string CV_TYPE2STR(int type){
 
 	ret += "C";
 	ret += (ch + '0');
-
 	return ret;
 }
 

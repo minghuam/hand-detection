@@ -15,7 +15,6 @@
 /*  for unix: dirent */
 #include <dirent.h>
 
-
 /** @brief Get the extension of a file.
 *	@param file Input file path.
 *	@return File extension string.
